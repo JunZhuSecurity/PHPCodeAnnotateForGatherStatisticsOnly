@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/jxl.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.jdt.compiler.apt_1.0.400.v0110816-0800.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.jdt.compiler.tool_1.0.100.v_B79_R37x.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.jdt.core.manipulation_1.4.0.v20110928-1453.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.jdt.core_3.7.3.v20120119-1537.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.jdt.ui_3.7.2.v20120109-1427.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.jdt_3.7.2.v201202080800.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.core.contenttype_3.4.100.v20110423-0524.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.core.jobs_3.5.101.v20120113-1953.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.core.resources_3.7.101.v20120125-1505.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.equinox.common_3.6.0.v20110523.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.core.runtime_3.7.0.v20110110.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.1.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.core.runtime.compatibility.auth_3.2.200.v20110110.jar"/>
+	<classpathentry kind="lib" path="/home/jun/New Eclipse/eclipse/plugins/org.eclipse.core.runtime.compatibility_3.2.100.v20100505.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
