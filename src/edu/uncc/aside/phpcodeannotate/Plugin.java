@@ -119,7 +119,9 @@ public class Plugin extends AbstractUIPlugin {
 			System.out.println("in start() -- getDefault() == null");
 		//before run, check whether the project has been run with the plugin before
 	    STATE_LOCATION = getDefault().getStateLocation().toString();
-		PreRunPluginConfig.config();
+		//PreRunPluginConfig.config();
+		//temporarily use, to obtain all file dirs that needs to be read
+		//PostRunPluginConfig.writeFileDirOfMarkerRecordIntoFile(allMarkerRecords);
 		
 	/*	 JavaCore.addElementChangedListener(CodeAnnotateElementChangeListener
 		 .getListener());*/

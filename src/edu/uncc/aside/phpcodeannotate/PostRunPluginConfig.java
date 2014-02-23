@@ -134,5 +134,66 @@ public class PostRunPluginConfig {
 		}
 		
 	}
-	
+public static void writeFileDirOfMarkerRecordIntoFile(HashSet<MarkerRecord> allMarkerRecords){
+		
+		String basePath = Utils.getPlugingBasePath();
+		String fileName = basePath + Plugin.Cleaned_MARKER_RECORD_FILE;
+		
+		
+		System.out.println("size of markers =========== " + Plugin.allMarkerRecords.size());
+		Iterator<MarkerRecord> iter = allMarkerRecords.iterator();
+		HashSet<String> fileDirs = new HashSet<String>();
+		MarkerRecord tmpMarkerRecord = null;
+		String fileDir = null;
+		int nodeStart, nodeLength;
+		String markerType;
+		boolean isAnnotated;
+		String seperator = Plugin.COMMA;
+		StringBuffer strBuf = new StringBuffer();
+		
+		
+		while(iter.hasNext()){
+			StringBuffer annotationsStrBuf = new StringBuffer();
+			Iterator<AnnotationRecord> iterAnnotation = null;
+			AnnotationRecord annotationRecord = null;
+			int markerHashCode;
+			
+			tmpMarkerRecord = iter.next();
+			markerHashCode = tmpMarkerRecord.hashCode();
+			markerType = tmpMarkerRecord.getMarkerType();
+			isAnnotated = tmpMarkerRecord.isAnnotated();
+			fileDir = tmpMarkerRecord.getNodePositionInfo().getFileDir();
+			nodeStart = tmpMarkerRecord.getNodePositionInfo().getStartPosition();
+			nodeLength = tmpMarkerRecord.getNodePositionInfo().getLength();
+			
+			iterAnnotation = tmpMarkerRecord.getAnnotationRecords().iterator();
+			while(iterAnnotation.hasNext()){
+				annotationRecord = iterAnnotation.next();
+				if(iterAnnotation.hasNext())
+				annotationsStrBuf.append(annotationRecord.hashCode() + Plugin.ITEM_SEPERATOR);
+				else
+					annotationsStrBuf.append(annotationRecord.hashCode());
+			}
+			//store the Marker information in the persistent file
+			String str = fileDir + "\n"; //markerHashCode + seperator + fileDir + seperator + nodeStart + seperator + nodeLength + seperator + markerType + seperator + isAnnotated + seperator + annotationsStrBuf.toString() + "\n";
+			if(!fileDirs.contains(str)){
+			    fileDirs.add(str);
+				strBuf.append(str);
+			}
+			System.out.println(fileDir);// + ", nodeStart=" + nodeStart + ",nodeLength=" + nodeLength + ", markerType=" + markerType + ",isAnnotated=" + isAnnotated);
+		}
+		
+		FileWriter fw = null;
+		try {
+			fw = new FileWriter(fileName);
+			BufferedWriter bw = new BufferedWriter(fw);
+			bw.write(strBuf.toString());
+			bw.close();
+			fw.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
 }

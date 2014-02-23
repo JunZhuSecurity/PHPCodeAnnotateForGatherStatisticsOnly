@@ -73,7 +73,7 @@ public class SaveAllMarkersAndAnnotations {
 		
 		for (IScriptFolder folder : folders) {
 			String folderName = folder.getElementName();
-			System.out.println("folder name = " + folderName);
+		//	System.out.println("folder name = " + folderName);
 			if(!Constants.PHPLibraryFolders.contains(folderName)){
 			
 			ISourceModule[] sourceModules = null;

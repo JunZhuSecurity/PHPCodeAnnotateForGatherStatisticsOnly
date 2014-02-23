@@ -25,6 +25,8 @@ import org.eclipse.ui.handlers.HandlerUtil;
 
 import edu.uncc.aside.phpcodeannotate.Constants;
 import edu.uncc.aside.phpcodeannotate.Plugin;
+import edu.uncc.aside.phpcodeannotate.PostRunPluginConfig;
+import edu.uncc.aside.phpcodeannotate.PreRunPluginConfig;
 import edu.uncc.aside.phpcodeannotate.models.AnnotationRecord;
 import edu.uncc.aside.phpcodeannotate.models.MarkerRecord;
 import edu.uncc.aside.phpcodeannotate.models.ModelRegistry;
@@ -51,6 +53,7 @@ public class ASIDECodeAnnotateHandler extends AbstractHandler {
 		
 	//	Plugin.isManuallyStarted = true;
 
+		
 		System.out
 				.println("ASIDECodeAnnotateHandler.java is ran ---first line");
 		targetPart = HandlerUtil.getActivePart(event);
@@ -96,6 +99,12 @@ public class ASIDECodeAnnotateHandler extends AbstractHandler {
 			System.out.println("scirpt project == null");
 			return null;
 	}
+		////////////////////
+		Plugin.allMarkerRecords = PreRunPluginConfig.readMarkerRecordFile(selectProject);
+		//temporarily use, to obtain all file dirs that needs to be read
+		//PostRunPluginConfig.writeFileDirOfMarkerRecordIntoFile(Plugin.allMarkerRecords);
+		/////above are newly added Feb. 19 to obtain markes from files and filter out the highly repeated functions
+		
 		IScriptFolder[] folders = null;
 		try {
 			folders = scriptProject.getScriptFolders();
@@ -109,7 +118,7 @@ public class ASIDECodeAnnotateHandler extends AbstractHandler {
 		
 		for (IScriptFolder folder : folders) {
 			String folderName = folder.getElementName();
-			System.out.println("folder name = " + folderName);
+			//System.out.println("folder name = " + folderName);
 			if(!Constants.PHPLibraryFolders.contains(folderName)){
 			
 			ISourceModule[] sourceModules = null;

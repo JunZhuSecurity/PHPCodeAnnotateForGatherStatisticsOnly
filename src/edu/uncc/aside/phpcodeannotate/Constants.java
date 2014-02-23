@@ -18,5 +18,15 @@ public class Constants {
 	public static final Object QUESTION_MESSAGE = "Where is the corresponding authentication process?";
 	public static final Object LOGIC_MARKER_MESSAGE = "This is an annotated access control logic.";
 	public static final String isPureFunction = "isPureFunction";
+	public static final Set<String> INSENSITIVE_OPERATIONS = new HashSet<String>(Arrays.asList(
+			"require_login",
+			"require_course_login",
+			"admin_externalpage_setup",
+			"require_capability",
+			"has_capability", 
+			"get_context_instance", 
+			"get_context_instance_by_id",
+			"print_html", "get_system_context", 
+			"format_text"));
 	
 }

@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 
 import edu.uncc.aside.phpcodeannotate.models.AnnotationRecord;
@@ -19,18 +20,17 @@ import edu.uncc.aside.phpcodeannotate.util.Utils;
 public class PreRunPluginConfig {
 
 	public static void config() {
-		//check whether it is the first time 
-	//	prepareConfigFile();
-	//	if(Plugin.FIRST_TIME_RUN == false){ 
-			//if this is not the first time running it, we need to read
-			//the markers and annotation recordsin the file
-		Plugin.allMarkerRecords = readMarkerRecordFile();
-	//	Plugin.allAnnotationRecords = readAnnotationRecordFile();
-	//	}
+		// check whether it is the first time
+		// prepareConfigFile();
+		// if(Plugin.FIRST_TIME_RUN == false){
+		// if this is not the first time running it, we need to read
+		// the markers and annotation recordsin the file
+	//	Plugin.allMarkerRecords = readMarkerRecordFile();
+		// Plugin.allAnnotationRecords = readAnnotationRecordFile();
+		// }
 	}
-	
 
-	public static void prepareConfigFile(){
+	public static void prepareConfigFile() {
 		IPath stateLocation = Plugin.getDefault().getStateLocation();
 		String fileName = stateLocation + "/" + Plugin.getConfigFile(); // might
 																		// have
@@ -57,38 +57,38 @@ public class PreRunPluginConfig {
 		} else {
 			Plugin.FIRST_TIME_RUN = true;
 			boolean created = false;
-				String str = "alreadyRun";
+			String str = "alreadyRun";
+			try {
+				created = configFile.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if (created == true) {
+				FileWriter fw = null;
 				try {
-					created = configFile.createNewFile();
+					fw = new FileWriter(configFile);
+					BufferedWriter bw = new BufferedWriter(fw);
+					bw.write(str);
+					bw.close();
+					fw.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				if(created == true){
-					FileWriter fw = null;
-					try {
-						fw = new FileWriter(configFile);
-						BufferedWriter bw = new BufferedWriter(fw);
-						bw.write(str);
-						bw.close();
-						fw.close();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else {
-					System.err.println("Config file is not created properly!");
-				}
+			} else {
+				System.err.println("Config file is not created properly!");
 			}
 		}
-	
+	}
 
-	public static HashSet<MarkerRecord> readMarkerRecordFile() {
+	public static HashSet<MarkerRecord> readMarkerRecordFile(IProject project) {
 		// /read file and create the set of MarkerRecord, as well as initilize
 		// all the marker with the corresponding resources;
 		String basePath = Utils.getPlugingBasePath();
-		String markerRecordFileName = basePath + Plugin.MARKER_RECORD_FILE;
 		
+		String markerRecordFileName = basePath + Plugin.MARKER_RECORD_FILE;
+
 		int NumOfItems = Plugin.MARKER_FILE_NUM_OF_ITEMS;
 		String regex = Plugin.COMMA;
 		HashSet<MarkerRecord> allMarkerRecords = new HashSet<MarkerRecord>();
@@ -99,9 +99,9 @@ public class PreRunPluginConfig {
 			fr = new FileReader(markerRecordFile);
 			BufferedReader br = new BufferedReader(fr);
 			String str = null;
-
+System.out.println("markers:");
 			while ((str = br.readLine()) != null) {
-				System.out.println("str = " + str);
+				//System.out.println("str = " + str);
 				String[] strs = str.split(regex);
 				if (strs.length != NumOfItems && strs.length != NumOfItems - 1) {
 					System.out.println("strs.length = " + strs.length);
@@ -113,23 +113,45 @@ public class PreRunPluginConfig {
 				int nodeStart = Integer.valueOf(strs[2]);
 				int nodeLength = Integer.valueOf(strs[3]);
 				String markerType = strs[4];
-				boolean isAnnotated = Boolean.valueOf(strs[5]);  //indicate which marker to use, red or yellow, if true, use yellow
+				boolean isAnnotated = Boolean.valueOf(strs[5]); // indicate
+																// which marker
+																// to use, red
+																// or yellow, if
+																// true, use
+																// yellow
 				NodePositionInfo nodePositionInfo = new NodePositionInfo(
 						fileDir, nodeStart, nodeLength);
 				MarkerRecord markerRecord = new MarkerRecord(nodePositionInfo,
 						markerType, isAnnotated);
-				//if there is already annotations in the annotation record file, then we need to read and insert to annotation set of the marker
-				if(strs.length == NumOfItems){//has annotation information
-					//to be added~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				// if there is already annotations in the annotation record
+				// file, then we need to read and insert to annotation set of
+				// the marker
+				if (strs.length == NumOfItems) {// has annotation information
+					// to be added~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				} else {// no annotations made yet, do nothing here.
+
 				}
-				else{//no annotations made yet, do nothing here.
-					
-				}
-				if(!allMarkerRecords.contains(markerRecord)){
-				allMarkerRecords.add(markerRecord);
+				if (!allMarkerRecords.contains(markerRecord)) {
+					if (!Utils.isOnFilterList(project, markerRecord
+							.getNodePositionInfo().getFileDir(), markerRecord
+							.getNodePositionInfo().getStartPosition(),
+							markerRecord.getNodePositionInfo().getLength())){ // newly
+																				// added
+																				// to
+																				// filter
+																				// out
+																				// some
+																				// hugely
+																				// repeated
+																				// functions
+
+						allMarkerRecords.add(markerRecord);
+					System.out.println(markerRecord.getNodePositionInfo().getFileDir());
+					}
 				}
 			}
-			System.out.println("in pre run config, marker records size = " + allMarkerRecords.size());
+			System.out.println("in pre run config, marker records size = "
+					+ allMarkerRecords.size());
 
 			br.close();
 			fr.close();
@@ -141,7 +163,8 @@ public class PreRunPluginConfig {
 	}
 
 	private static HashSet<AnnotationRecord> readAnnotationRecordFile() {
-		String annotationRecordFileName = Plugin.STATE_LOCATION + "/" + Plugin.ANNOTATION_RECORD_FILE;
+		String annotationRecordFileName = Plugin.STATE_LOCATION + "/"
+				+ Plugin.ANNOTATION_RECORD_FILE;
 		int NumOfItems = Plugin.ANNOTATON_FILE_NUM_OF_ITEMS;
 		String regex = Plugin.COMMA;
 		HashSet<AnnotationRecord> allAnnotationRecords = new HashSet<AnnotationRecord>();
@@ -164,13 +187,15 @@ public class PreRunPluginConfig {
 				int nodeStart = Integer.valueOf(strs[2]);
 				int nodeLength = Integer.valueOf(strs[3]);
 				String markerType = strs[4];
-				
+
 				NodePositionInfo nodePositionInfo = new NodePositionInfo(
 						fileDir, nodeStart, nodeLength);
-				AnnotationRecord annotationRecord = new AnnotationRecord(nodePositionInfo, markerType, null);
+				AnnotationRecord annotationRecord = new AnnotationRecord(
+						nodePositionInfo, markerType, null);
 				allAnnotationRecords.add(annotationRecord);
 			}
-			System.out.println("in pre run config, annotation records size = " + allAnnotationRecords.size());
+			System.out.println("in pre run config, annotation records size = "
+					+ allAnnotationRecords.size());
 
 			br.close();
 			fr.close();

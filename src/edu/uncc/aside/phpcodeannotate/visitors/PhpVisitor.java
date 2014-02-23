@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import edu.uncc.aside.phpcodeannotate.Constants;
 import edu.uncc.aside.phpcodeannotate.log.Log;
 import org.eclipse.php.internal.core.ast.nodes.ASTNode;
 import org.eclipse.php.internal.core.ast.nodes.FunctionDeclaration;
@@ -59,6 +60,8 @@ public class PhpVisitor extends ApplyAll {
 
 		}
 	}
+	
+
 
 	public void enableFunctionCheck() {
 		checkFunction = true;

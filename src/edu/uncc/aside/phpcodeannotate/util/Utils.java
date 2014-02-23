@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
@@ -22,6 +23,8 @@ import org.eclipse.php.internal.core.PHPVersion;
 import org.eclipse.php.internal.core.ast.nodes.ASTNode;
 import org.eclipse.php.internal.core.ast.nodes.ASTParser;
 import org.eclipse.php.internal.core.ast.nodes.FieldAccess;
+import org.eclipse.php.internal.core.ast.nodes.FunctionInvocation;
+import org.eclipse.php.internal.core.ast.nodes.ITypeBinding;
 import org.eclipse.php.internal.core.ast.nodes.Identifier;
 import org.eclipse.php.internal.core.ast.nodes.MethodInvocation;
 import org.eclipse.php.internal.core.ast.nodes.Program;
@@ -34,8 +37,10 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import edu.uncc.aside.phpcodeannotate.Constants;
+import edu.uncc.aside.phpcodeannotate.NodeFinder;
 import edu.uncc.aside.phpcodeannotate.Plugin;
 import edu.uncc.aside.phpcodeannotate.models.AnnotationRecord;
+import edu.uncc.aside.phpcodeannotate.models.AnnotationType;
 import edu.uncc.aside.phpcodeannotate.models.MarkerRecord;
 import edu.uncc.aside.phpcodeannotate.models.NodePositionInfo;
 import edu.uncc.aside.phpcodeannotate.models.Path;
@@ -187,46 +192,49 @@ public class Utils {
 
 		return null;
 	}
+
 	public static void removeAllQuestionMarkers(IResource resource) {
-		
-			// First, gotta check whether there is a marker for the method
-			// invocation
-		
-			IMarker[] markers = null;
+
+		// First, gotta check whether there is a marker for the method
+		// invocation
+
+		IMarker[] markers = null;
+		try {
+			markers = resource.findMarkers(Plugin.ANNOTATION_QUESTION, false,
+					IResource.DEPTH_ONE);
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		int char_start, length;
+		System.out.println("number of markers removed = " + markers.length);
+		for (IMarker marker : markers) {
 			try {
-				markers = resource.findMarkers(
-						Plugin.ANNOTATION_QUESTION, false, IResource.DEPTH_ONE);
+				marker.delete();
 			} catch (CoreException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			int char_start, length;
-			System.out.println("number of markers removed = " + markers.length);
-			for (IMarker marker : markers) {
-				try {
-					marker.delete();
-				} catch (CoreException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				/*char_start = marker.getAttribute(IMarker.CHAR_START, -1);
-				length = marker.getAttribute(IMarker.CHAR_END, -1) - char_start;
-				// Second, if there is one, then move on; if not, create one.
-				if (char_start == mi.getStart() && length == mi.getLength()){
-					System.out.println("char_start == mi.getStart() && length == mi.getLength() in markAccessor");
-					return;
-				}*/
-			}
-		
+			/*
+			 * char_start = marker.getAttribute(IMarker.CHAR_START, -1); length
+			 * = marker.getAttribute(IMarker.CHAR_END, -1) - char_start; //
+			 * Second, if there is one, then move on; if not, create one. if
+			 * (char_start == mi.getStart() && length == mi.getLength()){
+			 * System.out.println(
+			 * "char_start == mi.getStart() && length == mi.getLength() in markAccessor"
+			 * ); return; }
+			 */
+		}
+
 	}
-	
+
 	@SuppressWarnings("restriction")
 	public static void markAccessor(MethodInvocation mi, IResource resource) {
 		try {
 			// First, gotta check whether there is a marker for the method
 			// invocation
 			Program root = mi.getProgramRoot();
-			if(root == null){
+			if (root == null) {
 				System.err.println("root = null");
 			}
 			IMarker[] markers = resource.findMarkers(
@@ -236,12 +244,12 @@ public class Utils {
 				char_start = marker.getAttribute(IMarker.CHAR_START, -1);
 				length = marker.getAttribute(IMarker.CHAR_END, -1) - char_start;
 				// Second, if there is one, then move on; if not, create one.
-				if (char_start == mi.getStart() && length == mi.getLength()){
-					System.out.println("char_start == mi.getStart() && length == mi.getLength() in markAccessor");
+				if (char_start == mi.getStart() && length == mi.getLength()) {
+					System.out
+							.println("char_start == mi.getStart() && length == mi.getLength() in markAccessor");
 					return;
 				}
 			}
-			
 
 			IMarker questionMarker = resource
 					.createMarker(Plugin.ANNOTATION_QUESTION);
@@ -249,27 +257,31 @@ public class Utils {
 			questionMarker.setAttribute(IMarker.CHAR_START, mi.getStart());
 			questionMarker.setAttribute(IMarker.CHAR_END,
 					mi.getStart() + mi.getLength());
-			System.out.println("method invocation start=" + mi.getStart() + " , length =" + mi.getLength());
+			System.out.println("method invocation start=" + mi.getStart()
+					+ " , length =" + mi.getLength());
 			questionMarker.setAttribute(IMarker.MESSAGE,
 					"Where is the corresponding authentication process?");
-			System.out.println("line number = " +root.getLineNumber(mi.getStart()));
-			questionMarker.setAttribute(IMarker.LINE_NUMBER, root.getLineNumber(mi.getStart()));
+			System.out.println("line number = "
+					+ root.getLineNumber(mi.getStart()));
+			questionMarker.setAttribute(IMarker.LINE_NUMBER,
+					root.getLineNumber(mi.getStart()));
 			questionMarker.setAttribute(IMarker.SEVERITY,
 					IMarker.SEVERITY_WARNING);
 			questionMarker
 					.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
-			//test use
+			// test use
 			IMarker[] omarkers = resource.findMarkers(
 					Plugin.ANNOTATION_QUESTION, false, IResource.DEPTH_ONE);
 			System.out.println("omarker size = " + omarkers.length);
-			
+
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
 
 	}
-	
-	public static void createMarkerForAccessors(ISourceModule sourceModule, boolean isAnnotated, int markerStart, int markerLength){
+
+	public static void createMarkerForAccessors(ISourceModule sourceModule,
+			boolean isAnnotated, int markerStart, int markerLength) {
 		try {
 			// First, gotta check whether there is a marker for the method
 			// invocation
@@ -281,38 +293,45 @@ public class Utils {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			if(root == null){
+			if (root == null) {
 				System.err.println("root = null");
 			}
-		/*	IMarker[] markers = resource.findMarkers(
-					Plugin.ANNOTATION_QUESTION, false, IResource.DEPTH_ONE);
-			int char_start = 0, length = 0;
-			for (IMarker marker : markers) {
-				char_start = marker.getAttribute(IMarker.CHAR_START, -1);
-				length = marker.getAttribute(IMarker.CHAR_END, -1) - char_start;
-				// Second, if there is one, then move on; if not, create one.
-				if (char_start == markerStart && length == markerLength){
-					System.out.println("char_start == markerStart && length == markerLength");
-					return;
-				}
-			}*/
-			
-if(isAnnotated == false){//not annotated yet, show red warnings with questions
-	createAMarker(resource, root, markerStart, markerLength, Plugin.ANNOTATION_QUESTION);
-}else{//annotated, then show yellow warnings
-	createAMarker(resource, root, markerStart, markerLength, Plugin.ANNOTATION_QUESTION_CHECKED);
-}
-			
-			//test use
-			/*IMarker[] omarkers = resource.findMarkers(
-					Plugin.ANNOTATION_QUESTION, false, IResource.DEPTH_ONE);
-			System.out.println("omarker size = " + omarkers.length);*/
-			
+			/*
+			 * IMarker[] markers = resource.findMarkers(
+			 * Plugin.ANNOTATION_QUESTION, false, IResource.DEPTH_ONE); int
+			 * char_start = 0, length = 0; for (IMarker marker : markers) {
+			 * char_start = marker.getAttribute(IMarker.CHAR_START, -1); length
+			 * = marker.getAttribute(IMarker.CHAR_END, -1) - char_start; //
+			 * Second, if there is one, then move on; if not, create one. if
+			 * (char_start == markerStart && length == markerLength){
+			 * System.out.
+			 * println("char_start == markerStart && length == markerLength");
+			 * return; } }
+			 */
+
+			if (isAnnotated == false) {// not annotated yet, show red warnings
+										// with questions
+				createAMarker(resource, root, markerStart, markerLength,
+						Plugin.ANNOTATION_QUESTION);
+			} else {// annotated, then show yellow warnings
+				createAMarker(resource, root, markerStart, markerLength,
+						Plugin.ANNOTATION_QUESTION_CHECKED);
+			}
+
+			// test use
+			/*
+			 * IMarker[] omarkers = resource.findMarkers(
+			 * Plugin.ANNOTATION_QUESTION, false, IResource.DEPTH_ONE);
+			 * System.out.println("omarker size = " + omarkers.length);
+			 */
+
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
 	}
-	public static void createAnnotations(ISourceModule sourceModule, int markerStart, int markerLength){
+
+	public static void createAnnotations(ISourceModule sourceModule,
+			int markerStart, int markerLength) {
 		try {
 			// First, gotta check whether there is a marker for the method
 			// invocation
@@ -324,43 +343,45 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			if(root == null){
+			if (root == null) {
 				System.err.println("root = null");
 			}
-	
-	createAMarker(resource, root, markerStart, markerLength, Plugin.ANNOTATION_ANSWER);
-	
+
+			createAMarker(resource, root, markerStart, markerLength,
+					Plugin.ANNOTATION_ANSWER);
+
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
 	}
-	public static void createAMarker(IResource resource, Program root, int start, int length, String markerType) throws CoreException{
-		if(markerType.equals(Plugin.ANNOTATION_QUESTION)){
+
+	public static void createAMarker(IResource resource, Program root,
+			int start, int length, String markerType) throws CoreException {
+		if (markerType.equals(Plugin.ANNOTATION_QUESTION)) {
 			IMarker questionMarker = resource
 					.createMarker(Plugin.ANNOTATION_QUESTION);
 
 			questionMarker.setAttribute(IMarker.CHAR_START, start);
-			questionMarker.setAttribute(IMarker.CHAR_END,
-					start + length);
+			questionMarker.setAttribute(IMarker.CHAR_END, start + length);
 			questionMarker.setAttribute(IMarker.MESSAGE,
 					Constants.QUESTION_MESSAGE);
-			questionMarker.setAttribute(IMarker.LINE_NUMBER, root.getLineNumber(start));
-			
+			questionMarker.setAttribute(IMarker.LINE_NUMBER,
+					root.getLineNumber(start));
+
 			questionMarker.setAttribute(IMarker.SEVERITY,
 					IMarker.SEVERITY_WARNING);
 			questionMarker
 					.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
-		}else if(markerType.equals(Plugin.ANNOTATION_QUESTION_CHECKED)){
+		} else if (markerType.equals(Plugin.ANNOTATION_QUESTION_CHECKED)) {
 			String message = "Access control checks are at "
 					+ root.getLineNumber(start);
 
 			IMarker questionCheckedMarker = resource
 					.createMarker(Plugin.ANNOTATION_QUESTION_CHECKED);
 
-			questionCheckedMarker.setAttribute(IMarker.CHAR_START,
-					start);
-			questionCheckedMarker.setAttribute(IMarker.CHAR_END,
-					start + length);
+			questionCheckedMarker.setAttribute(IMarker.CHAR_START, start);
+			questionCheckedMarker
+					.setAttribute(IMarker.CHAR_END, start + length);
 			questionCheckedMarker.setAttribute(IMarker.MESSAGE, message);
 			questionCheckedMarker.setAttribute(IMarker.LINE_NUMBER,
 					root.getLineNumber(start));
@@ -368,11 +389,11 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 					IMarker.SEVERITY_INFO);
 			questionCheckedMarker.setAttribute(IMarker.PRIORITY,
 					IMarker.PRIORITY_HIGH);
-		}else if(markerType.equals(Plugin.ANNOTATION_ANSWER)){
-			IMarker answerMarker = resource.createMarker(Plugin.ANNOTATION_ANSWER);
+		} else if (markerType.equals(Plugin.ANNOTATION_ANSWER)) {
+			IMarker answerMarker = resource
+					.createMarker(Plugin.ANNOTATION_ANSWER);
 
-			answerMarker.setAttribute(IMarker.CHAR_START,
-					start);
+			answerMarker.setAttribute(IMarker.CHAR_START, start);
 			answerMarker.setAttribute(IMarker.CHAR_END, start + length);
 			answerMarker.setAttribute(IMarker.MESSAGE,
 					Constants.LOGIC_MARKER_MESSAGE);
@@ -382,7 +403,7 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 			answerMarker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
 		}
 	}
-	
+
 	public static void markAccessor(PHPCallExpression node, IResource resource,
 			IBuildContext context) {
 		try {
@@ -457,40 +478,45 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 		String name = s.getName();
 		return ("$db->query".equals(name) || "db->exec".equals(name));
 	}
-//phpVersion string, such as php4, php5
-	public static Program getCompilationUnit(ISourceModule unit) throws Exception {
-		StringReader st = new StringReader (unit.getBuffer().getContents());
-        ASTParser parser = ASTParser.newParser(st, PHPVersion.byAlias(Constants.PHP_VERSION),  false, unit);
-        return (Program)parser.createAST(null);
+
+	// phpVersion string, such as php4, php5
+	public static Program getCompilationUnit(ISourceModule unit)
+			throws Exception {
+		StringReader st = new StringReader(unit.getBuffer().getContents());
+		ASTParser parser = ASTParser.newParser(st,
+				PHPVersion.byAlias(Constants.PHP_VERSION), false, unit);
+		return (Program) parser.createAST(null);
 	}
-	
-	
+
 	public static class EditorUtility {
 		private EditorUtility() {
 			super();
 		}
 
 		public static IEditorPart getActiveEditor() {
-			IWorkbenchWindow window= Plugin.getDefault().getWorkbench().getActiveWorkbenchWindow();
+			IWorkbenchWindow window = Plugin.getDefault().getWorkbench()
+					.getActiveWorkbenchWindow();
 			if (window != null) {
-				IWorkbenchPage page= window.getActivePage();
+				IWorkbenchPage page = window.getActivePage();
 				if (page != null) {
 					return page.getActiveEditor();
 				}
 			}
 			return null;
 		}
-		
+
 		public static ISourceModule getPhpInput(IEditorPart part) {
-			IEditorInput editorInput= part.getEditorInput();
+			IEditorInput editorInput = part.getEditorInput();
 			if (editorInput != null) {
-				ISourceModule input= (ISourceModule) DLTKUIPlugin.getEditorInputModelElement(editorInput);
+				ISourceModule input = (ISourceModule) DLTKUIPlugin
+						.getEditorInputModelElement(editorInput);
 				return input;
 			}
-			return null;	
+			return null;
 		}
 
-		public static void selectInEditor(ITextEditor editor, int offset, int length) {
+		public static void selectInEditor(ITextEditor editor, int offset,
+				int length) {
 			IEditorPart active = getActiveEditor();
 			if (active != editor) {
 				editor.getSite().getPage().activate(editor);
@@ -498,6 +524,7 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 			editor.selectAndReveal(offset, length);
 		}
 	}
+
 	// ////////////above are what I need now
 	/*
 	 * public static class ExprUnitResource { Expression expr; CompilationUnit
@@ -734,73 +761,103 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 
 	public static boolean isSecurityInterest(MethodInvocation node) {
 		Identifier methodIdentifier = null;
-		
+
 		if (node.getMethod().getFunctionName().getFunctionName().getType() == 60) {
 			Variable varNode = (Variable) node.getMethod().getFunctionName()
 					.getFunctionName();
-			if (varNode.getVariableName().getType() == 33){
+			if (varNode.getVariableName().getType() == 33) {
 				methodIdentifier = (Identifier) varNode.getVariableName();
 				String methodName = methodIdentifier.getName();
 				System.out.println("methodName = " + methodName);
-		if(isSensitiveOperation(methodName)){
-		
-		if (node.getDispatcher().getType() == 60) {
-			ASTNode dispatcherVarName = ((Variable) node.getDispatcher()).getName();
-		
-			if (dispatcherVarName.getType() == 33){
-				Identifier dispatcherIden = (Identifier) dispatcherVarName;
-				String dispatcherStr = dispatcherIden.getName();
-				System.out.println("dispatcherStr = " +dispatcherStr);
-//				System.out.println("first branch: identifier = " + currentNode.toString());
-				if(dispatcherStr.equals("db")){ // should create a method testing the type binding of the dispatcher, together with the functiona invocation test
-				return true;
-			}
-				
-		} else if (node.getDispatcher().getType() == 24) {
-			FieldAccess field = (FieldAccess) node.getDispatcher();
-			if (field.getDispatcher().getType() == 60) {
-				System.out.println("in field dispatcher");
-				ASTNode fieldObjName = ((Variable) field.getDispatcher())
-						.getName();
-				System.out.println("(Identifier) fieldObjName).getName()="+ ((Identifier) fieldObjName).getName());
-				ASTNode fieldName = null;
-				if (fieldObjName.getType() == 33
-						&& "this".equals(((Identifier) fieldObjName).getName())
-						&& field.getMember().getType() == 60){ // I changed "
-					fieldName = ((Variable) field.getMember())
-							.getName();
-				System.out.println("this fieldName = " + fieldName);	
+				if (isSensitiveOperation(methodName)) {
+
+					if (node.getDispatcher().getType() == 60) {
+						ASTNode dispatcherVarName = ((Variable) node
+								.getDispatcher()).getName();
+
+						if (dispatcherVarName.getType() == 33) {
+							Identifier dispatcherIden = (Identifier) dispatcherVarName;
+							String dispatcherStr = dispatcherIden.getName();
+							System.out.println("dispatcherStr = "
+									+ dispatcherStr);
+							// System.out.println("first branch: identifier = "
+							// + currentNode.toString());
+							if (dispatcherStr.equals("db")) { // should create a
+																// method
+																// testing the
+																// type binding
+																// of the
+																// dispatcher,
+																// together with
+																// the functiona
+																// invocation
+																// test
+								return true;
+							}
+
+						} else if (node.getDispatcher().getType() == 24) {
+							FieldAccess field = (FieldAccess) node
+									.getDispatcher();
+							if (field.getDispatcher().getType() == 60) {
+								System.out.println("in field dispatcher");
+								ASTNode fieldObjName = ((Variable) field
+										.getDispatcher()).getName();
+								System.out
+										.println("(Identifier) fieldObjName).getName()="
+												+ ((Identifier) fieldObjName)
+														.getName());
+								ASTNode fieldName = null;
+								if (fieldObjName.getType() == 33
+										&& "this"
+												.equals(((Identifier) fieldObjName)
+														.getName())
+										&& field.getMember().getType() == 60) { // I
+																				// changed
+																				// "
+									fieldName = ((Variable) field.getMember())
+											.getName();
+									System.out.println("this fieldName = "
+											+ fieldName);
+								}
+
+								if (fieldObjName.getType() == 33
+										&& "db".equals(((Identifier) fieldObjName)
+												.getName())
+										&& field.getMember().getType() == 60) { // I
+																				// changed
+																				// "
+									fieldName = ((Variable) field.getMember())
+											.getVariableName();
+									System.out.println("db fieldName = "
+											+ fieldName);
+								}
+								/*
+								 * if (fieldName != null && fieldName.getType()
+								 * == 33) instanceIdentifier = new
+								 * VariableIdentifier(
+								 * net.sourceforge.refactor4pdt
+								 * .core.variablescope
+								 * .VariableIdentifier.Types.FIELD,
+								 * net.sourceforge
+								 * .refactor4pdt.core.variablescope
+								 * .VariableIdentifier.Calls.DECLARATION,
+								 * (Identifier) fieldName);
+								 */
+							}
+						}
+					}
 				}
-				
-				if (fieldObjName.getType() == 33
-						&& "db".equals(((Identifier) fieldObjName).getName())
-						&& field.getMember().getType() == 60){ // I changed "
-					fieldName = ((Variable) field.getMember())
-							.getVariableName();
-				System.out.println("db fieldName = " + fieldName);	
-				}
-				/*if (fieldName != null && fieldName.getType() == 33)
-					instanceIdentifier = new VariableIdentifier(
-							net.sourceforge.refactor4pdt.core.variablescope.VariableIdentifier.Types.FIELD,
-							net.sourceforge.refactor4pdt.core.variablescope.VariableIdentifier.Calls.DECLARATION,
-							(Identifier) fieldName);*/
+
 			}
-		}
-			}
-			}
-		
-		
-	}
 		}
 		return false;
 	}
-	
 
 	private static boolean isSensitiveOperation(String methodName) {
-	    Set<String> sensitiveOperations = new HashSet();
-	    sensitiveOperations.add("query");
-	    sensitiveOperations.add("exec");
-		if(sensitiveOperations.contains(methodName))
+		Set<String> sensitiveOperations = new HashSet();
+		sensitiveOperations.add("query");
+		sensitiveOperations.add("exec");
+		if (sensitiveOperations.contains(methodName))
 			return true;
 		return false;
 	}
@@ -811,9 +868,9 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 		Iterator<MarkerRecord> iter = allMarkerRecords.iterator();
 		MarkerRecord record = null;
 
-		while(iter.hasNext()){
+		while (iter.hasNext()) {
 			record = iter.next();
-			if(record.getNodePositionInfo().getFileDir().equals(fileDir)){
+			if (record.getNodePositionInfo().getFileDir().equals(fileDir)) {
 				records.add(record);
 			}
 		}
@@ -821,14 +878,18 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 	}
 
 	public static void createMarkersForSingleFile(
-			HashSet<MarkerRecord> markerRecordsInSingleFile, ISourceModule sourceModule) {
+			HashSet<MarkerRecord> markerRecordsInSingleFile,
+			ISourceModule sourceModule) {
 		IResource resource = sourceModule.getResource();
 		Iterator<MarkerRecord> iter = markerRecordsInSingleFile.iterator();
 		MarkerRecord record = null;
-		while(iter.hasNext()){
-	    record = iter.next();
-	    createMarkerForAccessors(sourceModule, record.isAnnotated(), record.getNodePositionInfo().getStartPosition(), record.getNodePositionInfo().getLength());
-	}
+		while (iter.hasNext()) {
+			record = iter.next();
+
+			createMarkerForAccessors(sourceModule, record.isAnnotated(), record
+					.getNodePositionInfo().getStartPosition(), record
+					.getNodePositionInfo().getLength());
+		}
 	}
 
 	public static MarkerRecord getMarkerRecordByPositionInfo(
@@ -836,9 +897,9 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 			HashSet<MarkerRecord> allMarkerRecords) {
 		MarkerRecord record = null;
 		Iterator<MarkerRecord> iter = allMarkerRecords.iterator();
-		while(iter.hasNext()){
+		while (iter.hasNext()) {
 			record = iter.next();
-			if(record.getNodePositionInfo().equals(markerPositionInfo)){
+			if (record.getNodePositionInfo().equals(markerPositionInfo)) {
 				System.out.println("one marker record is matched!");
 				return record;
 			}
@@ -851,9 +912,9 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 			HashSet<AnnotationRecord> allAnnotationRecords) {
 		AnnotationRecord record = null;
 		Iterator<AnnotationRecord> iter = allAnnotationRecords.iterator();
-		while(iter.hasNext()){
+		while (iter.hasNext()) {
 			record = iter.next();
-			if(record.getNodePositionInfo().equals(annotationPositionInfo)){
+			if (record.getNodePositionInfo().equals(annotationPositionInfo)) {
 				System.out.println("one annotation record is matched!");
 				return record;
 			}
@@ -867,9 +928,9 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 		Iterator<AnnotationRecord> iter = allAnnotationRecords.iterator();
 		AnnotationRecord record = null;
 
-		while(iter.hasNext()){
+		while (iter.hasNext()) {
 			record = iter.next();
-			if(record.getNodePositionInfo().getFileDir().equals(fileDir)){
+			if (record.getNodePositionInfo().getFileDir().equals(fileDir)) {
 				records.add(record);
 			}
 		}
@@ -880,23 +941,91 @@ if(isAnnotated == false){//not annotated yet, show red warnings with questions
 			HashSet<AnnotationRecord> annotationRecordsInSingleFile,
 			ISourceModule sourceModule) {
 		IResource resource = sourceModule.getResource();
-		Iterator<AnnotationRecord> iter = annotationRecordsInSingleFile.iterator();
+		Iterator<AnnotationRecord> iter = annotationRecordsInSingleFile
+				.iterator();
 		AnnotationRecord record = null;
-		while(iter.hasNext()){
-	    record = iter.next();
-	    createAnnotations(sourceModule, record.getNodePositionInfo().getStartPosition(), record.getNodePositionInfo().getLength());
-	}
-		
-	}
-	public static String getPlugingBasePath(){
-Plugin plugin = Plugin.getDefault();
-URL base = plugin.getBundle().getEntry("/");
+		while (iter.hasNext()) {
+			record = iter.next();
+			createAnnotations(sourceModule, record.getNodePositionInfo()
+					.getStartPosition(), record.getNodePositionInfo()
+					.getLength());
+		}
 
-try {
-return FileLocator.toFileURL(base).getFile() + "/";
-} catch (IOException e) {	
-e.printStackTrace();
-return "";
-}	
-}
+	}
+
+	public static String getPlugingBasePath() {
+		Plugin plugin = Plugin.getDefault();
+		URL base = plugin.getBundle().getEntry("/");
+
+		try {
+			return FileLocator.toFileURL(base).getFile() + "/";
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return "";
+	}
+	public static boolean isOnFunctionFilterList(FunctionInvocation node) {
+		if (node.getFunctionName().getName().getType() == 33) {
+			Identifier funcName = (Identifier) node.getFunctionName().getName();
+			if (Constants.INSENSITIVE_OPERATIONS.contains(funcName.getName())) {
+				return true;
+
+			}
+		} else {
+               return false;
+		}
+		return false;
+	}
+	public static boolean isOnFilterList(IProject project, String fileDir, int start, int length) {
+		Program astRoot = null;
+		//fileDir = "/enrol/mnet/addinstance.php";
+		//since fileDir includes /moodle210, so we need to remove /moodle210 to get the path within the project 
+		String relativeDir = fileDir.substring(10); 	
+		ASTNode node = null;
+		//Path path = new Path(fileDir);
+		IFile file = project.getFile(relativeDir);
+	//	System.out.println("fileDir = " + fileDir);
+		
+		if(file == null){
+			System.err.println("file==null in Utils.java");
+		}
+
+		ISourceModule iSourceModule = (ISourceModule) DLTKCore.create(file);
+        if(iSourceModule == null){
+        	System.err.println("iSourceModule == null in Util.java");
+        }
+		IResource iResource = iSourceModule.getResource();
+		try {
+			astRoot = Utils.getCompilationUnit(iSourceModule);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		node = NodeFinder.perform(astRoot, start, length);
+
+		if (node == null)
+			return false;
+		int nodeType = node.getType();
+
+		ITypeBinding binding = null;
+
+		String fullyQualifiedName = null;
+
+		switch (nodeType) {
+		// newly added Sept 24th
+		case ASTNode.FUNCTION_INVOCATION:
+			FunctionInvocation function = (FunctionInvocation)node;
+			if(isOnFunctionFilterList(function))
+			return true;
+			else
+				return false;
+			
+		default: break;	
+			
+			
+
+		}
+		return false;
+	}
+
 }
